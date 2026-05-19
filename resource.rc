@@ -1,0 +1,17 @@
+#include <windows.h>
+#include "src/resource.h"
+
+IDD_CONNECT_DIALOG DIALOGEX 0, 0, 260, 120
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "overlay"
+FONT 8, "MS Shell Dlg", 0, 0, 0x0
+BEGIN
+    LTEXT           "Server Address:", -1, 10, 10, 80, 8
+    EDITTEXT        IDC_SERVER_ADDR, 10, 22, 240, 12, ES_AUTOHSCROLL
+    LTEXT           "Username:", -1, 10, 40, 80, 8
+    EDITTEXT        IDC_USERNAME, 10, 52, 240, 12, ES_AUTOHSCROLL
+    LTEXT           "Keybind:", -1, 10, 70, 80, 8
+    COMBOBOX        IDC_KEYBIND, 10, 82, 80, 100, CBS_DROPDOWNLIST | WS_VSCROLL
+    DEFPUSHBUTTON   "Connect", IDOK, 100, 100, 60, 14
+    PUSHBUTTON      "Cancel", IDCANCEL, 180, 100, 60, 14
+END
