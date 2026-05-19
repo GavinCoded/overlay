@@ -16,6 +16,8 @@ constexpr UINT MSG_TRAY = WM_APP + 1;
 constexpr UINT MSG_RECONNECT = WM_APP + 5;
 constexpr UINT MSG_RENDER = WM_APP + 10;
 constexpr UINT MSG_AUTO_OPEN = WM_APP + 11;
+constexpr UINT MSG_PASTE = WM_APP + 12;
+constexpr UINT MSG_RECONNECT_ATTEMPT = WM_APP + 13;
 constexpr UINT MSG_ENTER = WM_USER + 1;
 constexpr UINT MSG_ESC = WM_USER + 2;
 constexpr UINT MSG_BACK = WM_USER + 3;
@@ -26,6 +28,7 @@ constexpr UINT MENU_PAUSE = 1003;
 
 constexpr UINT_PTR TIMER_CURSOR = 2;
 constexpr UINT_PTR TIMER_CLOSE = 3;
+constexpr UINT_PTR TIMER_RECONNECT = 4;
 
 namespace ov {
 
@@ -45,6 +48,7 @@ struct win_t {
     DWORD kvk;
     chat_t chat;
     client_t *cli;
+    bool first_connect;
     int sw, sh;
 
     vk::inst_t inst;

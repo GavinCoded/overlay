@@ -1,7 +1,7 @@
 #include "ov/tray.h"
 #include "ov/win.h"
+#include "ov/notify.h"
 #include "log.h"
-#include <shellapi.h>
 
 namespace ov {
 
@@ -29,16 +29,7 @@ void tray_t::del() {
 }
 
 void tray_t::show(const wchar_t *title, const wchar_t *text) {
-    auto nid = NOTIFYICONDATAW{};
-    nid.cbSize = sizeof(nid);
-    nid.hWnd = hwnd;
-    nid.uID = 1;
-    nid.uFlags = NIF_INFO;
-    nid.dwInfoFlags = NIIF_INFO;
-    nid.uTimeout = 3000;
-    wcscpy_s(nid.szInfoTitle, title);
-    wcscpy_s(nid.szInfo, text);
-    Shell_NotifyIconW(NIM_MODIFY, &nid);
+    notify(hwnd, title, text);
 }
 
 }

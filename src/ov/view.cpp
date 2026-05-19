@@ -3,8 +3,21 @@
 #include "log.h"
 #include "rgba.h"
 #include <cstdint>
+#include <string>
 
 namespace ov {
+
+static std::wstring truncate(HDC dc, const std::wstring &text, int maxw) {
+    SIZE sz = {};
+    GetTextExtentPoint32W(dc, text.c_str(), (int)text.size(), &sz);
+    if (sz.cx <= maxw) return text;
+    for (size_t i = text.size(); i > 0; i--) {
+        auto t = text.substr(0, i) + L"...";
+        GetTextExtentPoint32W(dc, t.c_str(), (int)t.size(), &sz);
+        if (sz.cx <= maxw) return t;
+    }
+    return L"...";
+}
 
 void render(win_t &w) {
     std::lock_guard<std::mutex> lock(w.mx);
@@ -35,20 +48,24 @@ void render(win_t &w) {
         for (int xx = 0; xx < w.cw; xx++)
             px[yy * w.cw + xx] = 0xA0000000;
 
+    int maxw = w.cw - pd * 2;
     for (int i = start; i < cnt; i++) {
         auto &msg = msgs[(size_t)i];
+        if (y + lh > w.ch - pd - ih) break;
         if (msg.sys) {
+            auto t = L"[system] " + truncate(dc, msg.text, maxw);
             SetTextColor(dc, RGB(255, 217, 89));
-            auto t = L"[system] " + msg.text;
             TextOutW(dc, pd, y, t.c_str(), (int)t.size());
         } else {
             auto disp = msg.sender + L": ";
-            SetTextColor(dc, RGB(128, 204, 255));
-            TextOutW(dc, pd, y, disp.c_str(), (int)disp.size());
             SIZE sz = {};
             GetTextExtentPoint32W(dc, disp.c_str(), (int)disp.size(), &sz);
+            int tw = maxw - sz.cx;
+            auto t = truncate(dc, msg.text, tw > 50 ? tw : maxw);
+            SetTextColor(dc, RGB(128, 204, 255));
+            TextOutW(dc, pd, y, disp.c_str(), (int)disp.size());
             SetTextColor(dc, RGB(255, 255, 255));
-            TextOutW(dc, pd + sz.cx, y, msg.text.c_str(), (int)msg.text.size());
+            TextOutW(dc, pd + sz.cx, y, t.c_str(), (int)t.size());
         }
         y += lh;
     }

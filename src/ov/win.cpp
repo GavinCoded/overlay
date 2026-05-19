@@ -13,6 +13,12 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wp, LPARAM lp) {
             if (kb->vkCode == VK_RETURN) { PostMessage(g_win->hw, MSG_ENTER, 0, 0); return 1; }
             if (kb->vkCode == VK_ESCAPE) { PostMessage(g_win->hw, MSG_ESC, 0, 0); return 1; }
             if (kb->vkCode == VK_BACK) { PostMessage(g_win->hw, MSG_BACK, 0, 0); return 1; }
+            if (kb->vkCode == VK_SHIFT || kb->vkCode == VK_LSHIFT || kb->vkCode == VK_RSHIFT ||
+                kb->vkCode == VK_CONTROL || kb->vkCode == VK_LCONTROL || kb->vkCode == VK_RCONTROL ||
+                kb->vkCode == VK_MENU || kb->vkCode == VK_LMENU || kb->vkCode == VK_RMENU)
+                return CallNextHookEx(nullptr, code, wp, lp);
+            if (kb->vkCode == 'V' && (GetAsyncKeyState(VK_CONTROL) & 0x8000))
+                { PostMessage(g_win->hw, MSG_PASTE, 0, 0); return 1; }
             wchar_t buf[4] = {}; BYTE ks[256] = {}; GetKeyboardState(ks);
             auto len = ToUnicode(kb->vkCode, kb->scanCode, ks, buf, 4, 0);
             if (len > 0) {
@@ -20,14 +26,14 @@ LRESULT CALLBACK hook_proc(int code, WPARAM wp, LPARAM lp) {
                     if (buf[i] >= 32) PostMessage(g_win->hw, WM_CHAR, buf[i], 0);
                 return 1;
             }
-            return 1;
+            return CallNextHookEx(nullptr, code, wp, lp);
         }
     }
     return (LRESULT)CallNextHookEx(nullptr, code, wp, lp);
 }
 
 win_t::win_t() : hw(nullptr), hi(nullptr), cw(700), ch(380), open(false),
-    cd(false), ntf(false), hook(nullptr), paused(false), kvk('T'), cli(nullptr), sw(0), sh(0),
+    cd(false), ntf(false), hook(nullptr), paused(false), kvk('T'), cli(nullptr), first_connect(true), sw(0), sh(0),
     mem_dc(nullptr), bmp(nullptr), bits(nullptr), old_bmp(nullptr) { g_win = this; }
 
 win_t::~win_t() {
@@ -95,12 +101,14 @@ bool win_t::make(HINSTANCE i, const std::wstring &u, DWORD k,
 
 void win_t::add_msg(const std::wstring &s, const std::wstring &t, bool sys) {
     { std::lock_guard<std::mutex> lock(mx); chat.add(s, t, sys); }
-    if (sys && t.find(L"connected") != std::wstring::npos)
+    if (sys && t.find(L"connected") != std::wstring::npos && first_connect) {
+        first_connect = false;
         ntf = true;
+    }
     if (hw) {
         if (open || ntf)
             PostMessage(hw, MSG_RENDER, 0, 0);
-        if (!open && !sys)
+        if (!open)
             PostMessage(hw, MSG_AUTO_OPEN, 0, 0);
     }
 }

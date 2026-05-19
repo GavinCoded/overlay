@@ -80,8 +80,21 @@ INT_PTR CALLBACK dlg_proc(HWND hw, UINT m, WPARAM w, LPARAM l) {
             auto ctx = (ov::dlg_ctx *)GetWindowLongPtr(hw, GWLP_USERDATA);
 
             ctx->cli->set_cb([ctx](const std::string &s, const std::string &t, bool sys) {
+                LOG("callback: sys=%d sender='%s' text='%s'", sys, s.c_str(), t.c_str());
                 std::wstring ws(s.begin(), s.end()), wt(t.begin(), t.end());
-                if (ctx->win) ctx->win->add_msg(ws, wt, sys);
+                if (ctx->win) {
+                    ctx->win->add_msg(ws, wt, sys);
+                    if (sys && ctx->win->hw) {
+                        auto u = ctx->cli->last_user();
+                        if (t.find("disconnected") != std::string::npos) {
+                            LOG("callback: detected 'disconnected' -> posting MSG_RECONNECT_ATTEMPT");
+                            PostMessage(ctx->win->hw, MSG_RECONNECT_ATTEMPT, 0, 0);
+                        } else if (t.find("left the server") != std::string::npos && t.find(u) != std::string::npos) {
+                            LOG("callback: detected '%s left the server' -> posting MSG_RECONNECT_ATTEMPT", u.c_str());
+                            PostMessage(ctx->win->hw, MSG_RECONNECT_ATTEMPT, 0, 0);
+                        }
+                    }
+                }
             });
 
             if (ctx->cli->go(w2a(host), port, w2a(uname))) {

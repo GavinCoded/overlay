@@ -15,6 +15,7 @@ struct client_t {
     std::thread th;
     std::atomic<bool> connected;
     std::atomic<bool> running;
+    std::atomic<bool> shutting_down;
     cb_t cb;
 
     client_t();
@@ -24,13 +25,19 @@ struct client_t {
     void send(const std::string &t);
     bool is_open() { return connected; }
     void set_cb(cb_t c) { cb = std::move(c); }
+    bool should_reconnect() { return reconnect; }
+    void clear_reconnect() { reconnect = false; }
+    std::string last_host() { return host; }
+    int last_port() { return port; }
+    std::string last_user() { return user; }
 
 private:
     void read();
     bool raw(const std::string &d);
     std::string host;
-    int port;
+    int port = 0;
     std::string user;
+    std::atomic<bool> reconnect;
 };
 
 }
